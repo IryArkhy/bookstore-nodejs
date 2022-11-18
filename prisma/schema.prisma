@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  email    String  @unique
+  username String  @unique
+  name     String
+  surname  String
+  password String
+  orders   Order[]
+}
+
+model Author {
+  id      String @id @default(uuid())
+
+  name    String
+  surname String
+  books    Book[]
+}
+
+model Genre {
+  id     String  @id @default(uuid())
+  name   String  @unique @db.VarChar(255)
+  book   Book?   @relation(fields: [bookId], references: [id])
+  bookId String?
+}
+
+model Book {
+  id        String      @id @default(uuid())
+  title     String      @unique
+  asset     String? // url
+  authorID  String
+  author    Author      @relation(fields: [authorID], references: [id])
+  description String
+  genres    Genre[]
+  orderItems OrderItem[]
+  price     Int
+  year      Int
+}
+
+enum ORDER_STATUS {
+  PROCESSING
+  CONFIRMED
+  IN_PROGRESS
+  CANCELED
+  DONE
+}
+
+model OrderItem {
+  id      String  @id @default(uuid())
+
+  orderID String
+  order   Order @relation(fields: [orderID], references: [id])
+  amount  Int
+  book    Book    @relation(fields: [bookId], references: [id])
+  bookId  String
+}
+
+model Order {
+  id         String       @id @default(uuid())
+  createdAt  DateTime     @default(now())
+
+  userID     String
+  user       User         @relation(fields: [userID], references: [id])
+  status     ORDER_STATUS @default(PROCESSING)
+  items      OrderItem[]
+  totalPrice Int
+}
