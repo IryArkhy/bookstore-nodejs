@@ -6,6 +6,8 @@ import env from './env';
 import router from './router';
 import { protectMiddleware } from './modules/auth';
 import * as users from './handlers/users';
+import { userValidators } from './handlers/users';
+import { handleInputErrors } from './modules/middleware';
 
 const app = express();
 
@@ -21,7 +23,12 @@ app.get('/', (_, res) => {
 });
 
 app.use('/api', protectMiddleware, router);
-app.post('/user', users.createNewUser);
-app.post('/signin', users.signIn);
+app.post(
+  '/user',
+  userValidators.createUser,
+  handleInputErrors,
+  users.createNewUser,
+);
+app.post('/signin', userValidators.signIn, handleInputErrors, users.signIn);
 
 export default app;

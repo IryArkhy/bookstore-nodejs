@@ -1,16 +1,23 @@
 import { Router } from 'express';
+import { body } from 'express-validator';
 
-import * as books from './handlers/books/books';
+import { handleInputErrors } from './modules/middleware';
+import { booksHandlers, booksValidators } from './handlers/books';
 
 const router = Router();
 
 /**
  * Books
  */
-router.get('/book', books.getBooks);
+router.get('/book', booksHandlers.getBooks);
 router.get('/book/:id', () => {});
-router.post('/book');
-router.put('/book/:id', () => {});
+router.post('/book', booksValidators.createBook, handleInputErrors, () => {});
+router.put(
+  '/book/:id',
+  body('title').isString(),
+  handleInputErrors,
+  booksHandlers.updateBook,
+);
 router.delete('/book/:id', () => {});
 
 /**

@@ -19,11 +19,6 @@ export const createNewUser = async (
     password: await hashPassword(body.password),
   };
 
-  if (body.role && !roles.includes(body.role)) {
-    res.status(400);
-    res.json({ message: 'Invalid role' });
-  }
-
   if (body.role) {
     userData.role = body.role;
   }
