@@ -1,5 +1,6 @@
+import env from './env';
 import app from './server';
 
-app.listen(3001, () => {
-  console.log('hello on 3001');
+app.listen(env.config.port, () => {
+  console.log(`hello on ${env.config.port}`);
 });
