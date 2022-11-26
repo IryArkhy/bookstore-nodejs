@@ -4,10 +4,7 @@ export const createUser = [
   body('email').isEmail(),
   body('password').isStrongPassword(),
   body('username').isString(),
-  oneOf([
-    body('role').optional().equals('BASIC'),
-    body('role').optional().equals('ADMIN'),
-  ]),
+  body('role').optional().isIn(['BASIC', 'ADMIN']),
 ];
 
 export const signIn = [body('email').isEmail(), body('password').isString()];

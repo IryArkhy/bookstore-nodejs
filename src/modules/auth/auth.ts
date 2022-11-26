@@ -4,15 +4,22 @@ import * as bcrypt from 'bcrypt';
 
 import type { ROLES as PrismaRole } from '.prisma/client';
 import env from '../../env';
+import { prisma } from '../../db';
 
 type JWTUserInfo = {
   role: PrismaRole;
   id: string;
 };
 
-interface IRequestWithUser extends Request {
-  user: string | jwt.JwtPayload;
-}
+export type RequestWithUser<
+  P = Record<string, any>,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = qs.ParsedQs,
+  Locals extends Record<string, any> = Record<string, any>,
+> = Request<P, ResBody, ReqBody, ReqQuery, Locals> & {
+  user: JWTUserInfo;
+};
 
 // TODO: implement rate limiting (it's added before the api on the network layer (proxy, api gateway))
 
@@ -21,8 +28,8 @@ export const createJWT = ({ id, role }: JWTUserInfo): string => {
   return token;
 };
 
-export const protectMiddleware = (
-  req: IRequestWithUser,
+export const protectMiddleware = async (
+  req: RequestWithUser,
   res: Response,
   next: NextFunction,
 ) => {
@@ -46,12 +53,22 @@ export const protectMiddleware = (
   }
 
   try {
-    const user = jwt.verify(token, env.auth.jwtSecret);
+    const user = jwt.verify(token, env.auth.jwtSecret) as JWTUserInfo;
 
-    req.user = user;
+    const userExists = await prisma.user.findFirst({
+      where: {
+        id: user.id,
+      },
+    });
+
+    if (userExists) {
+      req.user = user;
+    } else {
+      throw new Error();
+    }
+
     next();
   } catch (e) {
-    console.log(e);
     notifyNotAuthorized('Not valid token');
     return;
   }

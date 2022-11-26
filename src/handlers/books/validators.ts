@@ -1,15 +1,5 @@
 import { body } from 'express-validator';
 
-export type CreateBookRequestBody = {
-  title: string;
-  asset: string;
-  authorID: string;
-  description: string;
-  genres: [];
-  price: number;
-  year: number;
-};
-
 export const createBook = [
   body(['title', 'authorID', 'description']).isString(),
   body(['price', 'year']).isInt(),
@@ -17,4 +7,11 @@ export const createBook = [
   //   body('asset').optional().isString(),
 ];
 
+export const getBooks = [
+  body('offset').isInt().optional(), // bookID
+  body('limit').isInt().optional(),
+];
+
 export const getBookByID = [];
+
+export const updateBook = [body('price').isInt(), body('bookId').isString()];

@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 
-import type { ROLES as PrismaRole } from '.prisma/client';
 import { prisma } from '../../db';
 import { comparePasswords, createJWT, hashPassword } from '../../modules/auth';
 
@@ -11,7 +10,6 @@ export const createNewUser = async (
   res: Response,
 ) => {
   const { body } = req;
-  const roles: PrismaRole[] = ['BASIC', 'ADMIN'];
 
   const userData: CreateUserRequestBody = {
     username: body.username,

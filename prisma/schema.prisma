@@ -25,35 +25,44 @@ model User {
   name     String?
   surname  String?
   orders   Order[]
-  role ROLES @default(BASIC)
+  role     ROLES   @default(BASIC)
 }
 
 model Author {
-  id      String @id @default(uuid())
+  id String @id @default(uuid())
 
   name    String
   surname String
-  books    Book[]
+  books   Book[]
 }
 
 model Genre {
-  id     String  @id @default(uuid())
-  name   String  @unique @db.VarChar(255)
-  book   Book?   @relation(fields: [bookId], references: [id])
-  bookId String?
+  id    String        @id @default(uuid())
+  name  String        @unique @db.VarChar(255)
+  books GenreOnBook[]
+}
+
+model GenreOnBook {
+  book       Book     @relation(fields: [bookID], references: [id])
+  bookID     String // relation scalar field (used in the `@relation` attribute above)
+  genre      Genre    @relation(fields: [genreID], references: [id])
+  genreID    String // relation scalar field (used in the `@relation` attribute above)
+  assignedAt DateTime @default(now())
+
+  @@id([bookID, genreID])
 }
 
 model Book {
-  id        String      @id @default(uuid())
-  title     String      @unique
-  asset     String? // url
-  authorID  String
-  author    Author      @relation(fields: [authorID], references: [id])
+  id          String        @id @default(uuid())
+  title       String        @unique
+  asset       String? // url
+  authorID    String
+  author      Author        @relation(fields: [authorID], references: [id])
   description String
-  genres    Genre[]
-  orderItems OrderItem[]
-  price     Int
-  year      Int
+  genres      GenreOnBook[]
+  orderItems  OrderItem[]
+  price       Int
+  year        Int
 }
 
 enum ORDER_STATUS {
@@ -65,22 +74,27 @@ enum ORDER_STATUS {
 }
 
 model OrderItem {
-  id      String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  orderID String
-  order   Order @relation(fields: [orderID], references: [id])
-  amount  Int
-  book    Book    @relation(fields: [bookId], references: [id])
-  bookId  String
+  orderID    String
+  order      Order  @relation(fields: [orderID], references: [id])
+  amount     Int
+  book       Book   @relation(fields: [bookId], references: [id])
+  bookId     String
+  totalPrice Int
+
+  @@index([id, orderID])
 }
 
 model Order {
-  id         String       @id @default(uuid())
-  createdAt  DateTime     @default(now())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
 
   userID     String
   user       User         @relation(fields: [userID], references: [id])
   status     ORDER_STATUS @default(PROCESSING)
   items      OrderItem[]
   totalPrice Int
+
+  @@index([id, userID])
 }
