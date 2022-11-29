@@ -8,10 +8,15 @@ export const createBook = [
 ];
 
 export const getBooks = [
-  body('offset').isInt().optional(), // bookID
+  body('offset').isInt().optional(),
   body('limit').isInt().optional(),
 ];
 
-export const getBookByID = [];
+export const updateBook = [
+  body('authorID').isString(),
+  body('price').isInt().optional(),
+  body('title').isString().optional(),
+  body('description').isString().optional(),
+];
 
-export const updateBook = [body('price').isInt(), body('bookId').isString()];
+export const deleteBook = body('authorID').isString();

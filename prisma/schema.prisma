@@ -59,10 +59,11 @@ model Book {
   authorID    String
   author      Author        @relation(fields: [authorID], references: [id])
   description String
-  genres      GenreOnBook[]
+  genres      GenreOnBook[] 
   orderItems  OrderItem[]
   price       Int
   year        Int
+  @@unique([id, authorID])
 }
 
 enum ORDER_STATUS {
@@ -83,7 +84,7 @@ model OrderItem {
   bookId     String
   totalPrice Int
 
-  @@index([id, orderID])
+  @@unique([id, orderID])
 }
 
 model Order {
@@ -96,5 +97,5 @@ model Order {
   items      OrderItem[]
   totalPrice Int
 
-  @@index([id, userID])
+  @@unique([id, userID])
 }

@@ -20,6 +20,12 @@ export type GetBooksReqQuery = {
 };
 
 export type UpdateBookReqBody = {
-  price: number;
-  bookID: string;
+  authorID: string;
+  price?: number;
+  title?: string;
+  description?: string;
+};
+
+export type DeleteBookReqBody = {
+  authorID: string;
 };

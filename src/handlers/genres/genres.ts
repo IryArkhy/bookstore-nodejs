@@ -4,7 +4,7 @@ import { prisma } from '../../db';
 
 import { CreateGenresReqBody } from './types';
 
-export const getGenres = async (req: Request, res: Response) => {
+export const getGenres = async (_: Request, res: Response) => {
   const genres = await prisma.genre.findMany();
 
   res.status(200);

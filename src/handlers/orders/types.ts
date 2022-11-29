@@ -2,6 +2,7 @@ import { ORDER_STATUS } from '@prisma/client';
 
 export type OrderItem = {
   bookID: string;
+  authorID: string;
   amount: number;
 };
 

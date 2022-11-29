@@ -3,27 +3,32 @@ import { body } from 'express-validator';
 export const createOrder = [
   body('orderItems').custom(input => {
     if (!Array.isArray(input)) {
-      return { message: 'Invalid input type.' };
+      return Promise.reject('Invalid input type. Should be an array.');
     }
 
     if (input.length === 0) {
-      return { message: 'At least one order item' };
+      return Promise.reject('At least one order item');
     }
 
     const validInputItems = input.every(item => {
-      const orderItemKeys = ['bookID', 'amount'];
+      const orderItemKeys = ['bookID', 'amount', 'authorID'];
       const validKeys = Object.keys(item).every(key =>
         orderItemKeys.includes(key),
       );
-      const orderItem = item as { bookID: unknown; amount: unknown };
+      const orderItem = item as {
+        bookID: unknown;
+        amount: unknown;
+        authorID: unknown;
+      };
       const validAmount = typeof orderItem.amount === 'number';
       const validBookID = typeof orderItem.bookID === 'string';
+      const validAuthorID = typeof orderItem.authorID === 'string';
 
-      return validKeys && validAmount && validBookID;
+      return validKeys && validAmount && validBookID && validAuthorID;
     });
 
     if (!validInputItems) {
-      return { message: 'Invalid order item(s)' };
+      return Promise.reject('Invalid order item(s)');
     }
 
     return true;

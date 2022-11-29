@@ -5,6 +5,7 @@ import { RequestWithUser } from '../../modules/auth';
 
 import {
   CreateBookReqBody,
+  DeleteBookReqBody,
   GetBooksReqBody,
   GetBooksReqQuery,
   UpdateBookReqBody,
@@ -49,10 +50,7 @@ export const getBooks = async (
     },
   });
 
-  const count = await prisma.book.aggregate({
-    _count: {
-      _all: true,
-    },
+  const count = await prisma.book.count({
     where: {
       authorID,
       genres: {
@@ -72,27 +70,88 @@ export const getBooks = async (
 
   res.json({
     books,
-    count: offset === count._count._all,
+    count: offset === count,
     limit,
-    offset: newOffset === count._count._all ? null : newOffset,
+    offset: newOffset === count ? null : newOffset,
   });
 };
 
 export const getBookByID = async (
-  req: Request<{ bookID: string }>,
+  req: Request<{ id: string; authorID: string }>,
   res: Response,
 ) => {
   const { params } = req;
+
   const book = await prisma.book.findUnique({
     where: {
-      id: params.bookID,
+      id_authorID: {
+        id: params.id,
+        authorID: params.authorID,
+      },
+    },
+    include: {
+      genres: true,
     },
   });
 
   if (!book) {
     res.status(404);
-    res.json({ message: 'Book is not found' });
+    return res.json({ message: 'Book is not found' });
   }
+  res.status(200);
+  res.json({
+    book,
+  });
+};
+
+export const searchBook = async (
+  req: Request<any, any, any, { query: string }>,
+  res: Response,
+) => {
+  const { query } = req;
+
+  const parsedQuery = decodeURIComponent(query.query);
+
+  const books = await prisma.book.findMany({
+    where: {
+      OR: [
+        {
+          description: {
+            contains: parsedQuery,
+            mode: 'insensitive',
+          },
+        },
+        {
+          title: {
+            contains: parsedQuery,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    },
+  });
+
+  const count = await prisma.book.count({
+    where: {
+      OR: [
+        {
+          description: {
+            contains: parsedQuery,
+            mode: 'insensitive',
+          },
+        },
+        {
+          title: {
+            contains: parsedQuery,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    },
+  });
+
+  res.status(200);
+  res.json({ books, count });
 };
 
 export const createBook = async (
@@ -125,56 +184,92 @@ export const createBook = async (
         year: body.year,
       },
     });
-    console.log({ book });
+
     res.status(201);
     res.json({
       book,
     });
   } catch (error) {
-    console.log({ error });
     res.status(500);
     res.json(error);
   }
 };
 
 export const updateBook = async (
-  req: RequestWithUser<any, any, UpdateBookReqBody>,
+  req: RequestWithUser<
+    {
+      id: string;
+    },
+    any,
+    UpdateBookReqBody
+  >,
   res: Response,
 ) => {
-  const { body } = req;
-  const book = await prisma.book.update({
+  const { body, params } = req;
+
+  if (Object.keys(body).length === 0) {
+    res.status(400);
+    res.json({
+      errors: [
+        {
+          status: 400,
+          message: 'No fields to update',
+        },
+      ],
+    });
+  } else {
+    const book = await prisma.book.update({
+      where: {
+        id_authorID: {
+          id: params.id,
+          authorID: body.authorID,
+        },
+      },
+      data: body,
+    });
+    res.status(200);
+    res.json({ message: 'Book updated', book });
+  }
+};
+
+// TODO: shoudl delete related items
+export const deleteBook = async (
+  req: RequestWithUser<{ id: string }, any, DeleteBookReqBody>,
+  res: Response,
+) => {
+  const { params, user, body } = req;
+
+  if (user.role !== 'ADMIN') {
+    res.status(401);
+    res.json({
+      message: 'No sufficient permissions.',
+    });
+
+    return;
+  }
+  await prisma.book.update({
     where: {
-      id: body.bookID,
+      id_authorID: {
+        id: params.id,
+        authorID: body.authorID,
+      },
     },
     data: {
-      price: body.price,
+      genres: {
+        deleteMany: {},
+      },
     },
   });
-  res.status(200);
-  res.json({ message: 'Book updated', book });
-};
 
-export const deleteBook = async (
-  req: RequestWithUser<{ bookID: string }>,
-  res: Response,
-) => {
-  const { params } = req;
   const deletedBook = await prisma.book.delete({
     where: {
-      id: params.bookID,
+      id_authorID: {
+        id: params.id,
+        authorID: body.authorID,
+      },
     },
   });
-  res.json(200);
+
+  res.status(200);
   res.json({ message: 'Book deleted', book: deletedBook });
 };
-
-/**
- * Harry Potter and the Chamber of Secrets
- * Where Love Has Gone
- * The Mysterious Affair at Styles
- * A Perfect Stranger
- * Appointment with Death
- * Harry Potter and the Philosopher's Stone
- * Harry Potter and the Prisoner of Azkaban
- * Jig-Saw
- */

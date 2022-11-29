@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { handleInputErrors } from './modules/middleware';
 import { booksHandlers, booksValidators } from './handlers/books';
-import { ordersValidators } from './handlers/orders';
+import { orderHandlers, ordersValidators } from './handlers/orders';
 import { authorHandlers, authorsValidators } from './handlers/authors';
 import { genresHandlers, genresValidators } from './handlers/genres';
 
@@ -17,7 +17,8 @@ router.get(
   handleInputErrors,
   booksHandlers.getBooks,
 );
-router.get('/book/:id', booksHandlers.getBookByID);
+router.get('/book/search', booksHandlers.searchBook);
+router.get('/book/:id/:authorID', booksHandlers.getBookByID);
 router.post(
   '/book',
   booksValidators.createBook,
@@ -30,24 +31,29 @@ router.put(
   handleInputErrors,
   booksHandlers.updateBook,
 );
-router.delete('/book/:id', booksHandlers.deleteBook);
+router.delete(
+  '/book/:id',
+  booksValidators.deleteBook,
+  handleInputErrors,
+  booksHandlers.deleteBook,
+);
 
 /**
  * Orders
  */
-router.get('/order', () => {});
-router.get('/order/:id', () => {});
+router.get('/order', orderHandlers.getUserOrders);
+router.get('/order/:id', orderHandlers.getOrderByID);
 router.post(
   '/order',
   ordersValidators.createOrder,
   handleInputErrors,
-  () => {},
+  orderHandlers.createOrder,
 );
 router.put(
   '/order/:id',
   ordersValidators.updateOrder,
   handleInputErrors,
-  () => {},
+  orderHandlers.updateOrder,
 ); // To update status
 
 /**
