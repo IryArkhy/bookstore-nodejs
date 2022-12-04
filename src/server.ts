@@ -2,7 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 
-import env from './env';
+import config from './config';
 import router from './router';
 import { protectMiddleware } from './modules/auth';
 import * as users from './handlers/users';
@@ -16,9 +16,8 @@ import {
 
 const app = express();
 
-// middleware
 app.use(cors());
-app.use(morgan(env.config.morganMode ?? 'dev'));
+app.use(morgan(config.morganMode));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
