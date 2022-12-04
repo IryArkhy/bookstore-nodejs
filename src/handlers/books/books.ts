@@ -24,6 +24,7 @@ export const getBooks = async (
     const { authorID, genre = '', year } = query;
 
     const parsedGenres = genre.replace('%', ' ').split(',');
+    const shouldIncludeCondition = authorID || genre || year;
 
     const books = await prisma.book.findMany({
       skip: offset,
@@ -31,19 +32,23 @@ export const getBooks = async (
       orderBy: {
         title: 'asc',
       },
-      where: {
-        authorID,
-        genres: {
-          some: {
-            genre: {
-              name: {
-                in: parsedGenres,
-              },
+      where: shouldIncludeCondition
+        ? {
+            authorID,
+            genres: {
+              some: parsedGenres.length
+                ? {
+                    genre: {
+                      name: {
+                        in: parsedGenres,
+                      },
+                    },
+                  }
+                : undefined,
             },
-          },
-        },
-        year: year ? parseInt(year) : undefined,
-      },
+            year: year ? parseInt(year) : undefined,
+          }
+        : undefined,
       include: {
         genres: {
           include: {
@@ -55,19 +60,23 @@ export const getBooks = async (
     });
 
     const count = await prisma.book.count({
-      where: {
-        authorID,
-        genres: {
-          some: {
-            genre: {
-              name: {
-                in: parsedGenres,
-              },
+      where: shouldIncludeCondition
+        ? {
+            authorID,
+            genres: {
+              some: parsedGenres.length
+                ? {
+                    genre: {
+                      name: {
+                        in: parsedGenres,
+                      },
+                    },
+                  }
+                : undefined,
             },
-          },
-        },
-        year: year ? parseInt(year) : undefined,
-      },
+            year: year ? parseInt(year) : undefined,
+          }
+        : undefined,
     });
     res.status(200);
     const newOffset = offset + limit;
