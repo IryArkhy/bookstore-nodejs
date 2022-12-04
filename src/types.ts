@@ -10,6 +10,7 @@ export class CustomError extends Error {
     super(message);
     this.type = type;
     this.statusCode = statusCode;
+    Object.setPrototypeOf(this, CustomError.prototype);
   }
 }
 

@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES6",
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "lib": ["esnext"],
     "esModuleInterop": true,
-    "moduleResolution": "node"
-  }
+    "strict": false,
+    "moduleResolution": "node",
+    "declaration": true
+  },
+  "include": ["src/**/*.ts"]
 }
