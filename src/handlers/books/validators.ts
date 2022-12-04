@@ -1,7 +1,8 @@
 import { body } from 'express-validator';
 
 export const createBook = [
-  body(['title', 'authorID', 'description']).isString(),
+  body(['title', 'authorID']).isString().isLength({ min: 1 }),
+  body('description').isString().isLength({ min: 10 }),
   body(['price', 'year']).isInt(),
   body('genres').isArray({ min: 1 }),
   //   body('asset').optional().isString(),

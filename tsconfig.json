@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    "target": "ES6",
     "sourceMap": true,
     "outDir": "dist",
     "lib": ["esnext"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "moduleResolution": "node"
   }
 }

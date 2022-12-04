@@ -1,6 +1,12 @@
 import { Router } from 'express';
 
-import { handleInputErrors } from './modules/middleware';
+import {
+  catchError,
+  checkUserRole,
+  errorLogger,
+  handleInputErrors,
+  invalidPathHandler,
+} from './modules/middleware';
 import { booksHandlers, booksValidators } from './handlers/books';
 import { orderHandlers, ordersValidators } from './handlers/orders';
 import { authorHandlers, authorsValidators } from './handlers/authors';
@@ -23,18 +29,21 @@ router.post(
   '/book',
   booksValidators.createBook,
   handleInputErrors,
+  checkUserRole,
   booksHandlers.createBook,
 );
 router.put(
   '/book/:id',
   booksValidators.updateBook,
   handleInputErrors,
+  checkUserRole,
   booksHandlers.updateBook,
 );
 router.delete(
   '/book/:id',
   booksValidators.deleteBook,
   handleInputErrors,
+  checkUserRole,
   booksHandlers.deleteBook,
 );
 
@@ -53,6 +62,7 @@ router.put(
   '/order/:id',
   ordersValidators.updateOrder,
   handleInputErrors,
+  checkUserRole,
   orderHandlers.updateOrder,
 ); // To update status
 
@@ -65,6 +75,7 @@ router.post(
   '/author',
   authorsValidators.createAuthor,
   handleInputErrors,
+  checkUserRole,
   authorHandlers.createAuthor,
 );
 
@@ -76,7 +87,12 @@ router.post(
   '/genre',
   genresValidators.createGenres,
   handleInputErrors,
+  checkUserRole,
   genresHandlers.createGenres,
 );
+
+router.use(errorLogger);
+router.use(invalidPathHandler);
+router.use(catchError);
 
 export default router;

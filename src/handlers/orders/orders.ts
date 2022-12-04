@@ -1,8 +1,10 @@
 import { Book } from '@prisma/client';
-import { Response } from 'express';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { NextFunction, Response } from 'express';
 
 import { prisma } from '../../db';
 import { RequestWithUser } from '../../modules/auth';
+import { CustomError, PrismaClientErrorCodes } from '../../types';
 
 import {
   CreateOrderReqBody,
@@ -13,6 +15,7 @@ import {
 export const createOrder = async (
   req: RequestWithUser<any, any, CreateOrderReqBody>,
   res: Response,
+  next: NextFunction,
 ) => {
   const { body, user } = req;
   const data: { book: Book; orderInfo: OrderItem }[] = [];
@@ -20,7 +23,7 @@ export const createOrder = async (
   try {
     await Promise.all(
       body.orderItems.map(async item => {
-        const book = await prisma.book.findUnique({
+        const book = await prisma.book.findUniqueOrThrow({
           where: {
             id_authorID: {
               id: item.bookID,
@@ -54,9 +57,7 @@ export const createOrder = async (
     res.status(201);
     res.json({ order: { ...order, orderItems } });
   } catch (error) {
-    console.log(error);
-    res.status(500);
-    res.json({ message: 'Error' });
+    next(error);
   }
 };
 
@@ -69,20 +70,11 @@ export const updateOrder = async (
     UpdateOrderStatusReqBody
   >,
   res: Response,
+  next: NextFunction,
 ) => {
   const { user, body, params } = req;
 
-  if (user.role !== 'ADMIN') {
-    res.status(401);
-    res.json({
-      errors: [
-        {
-          code: 401,
-          message: 'Insufficient permissions',
-        },
-      ],
-    });
-  } else {
+  try {
     const order = await prisma.order.update({
       where: {
         id_userID: {
@@ -99,59 +91,82 @@ export const updateOrder = async (
     res.json({
       order,
     });
+  } catch (error) {
+    let err: CustomError | Error = error as Error;
+    let errorMessage: string = error.message;
+
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === PrismaClientErrorCodes.notFoundOperator) {
+        errorMessage = JSON.stringify(error.meta);
+      }
+
+      err = new CustomError(errorMessage, 'input');
+    }
+
+    next(err);
   }
 };
 
-export const getUserOrders = async (req: RequestWithUser, res: Response) => {
-  const user = await prisma.user.findFirst({
-    where: {
-      id: req.user.id,
-    },
-    include: {
-      orders: {
-        include: {
-          items: true,
+export const getUserOrders = async (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        id: req.user.id,
+      },
+      include: {
+        orders: {
+          include: {
+            items: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  res.status(200);
-  res.json({ orders: user.orders });
+    res.status(200);
+    res.json({ orders: user.orders });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getOrderByID = async (
   req: RequestWithUser<{ id: string }>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const order = await prisma.order.findFirst({
-    where: {
-      id: req.params.id,
-      //   userId: req.user.id, // findUnique: will work after migration
-    },
-    include: {
-      items: {
-        include: {
-          book: true,
+  try {
+    const order = await prisma.order.findUniqueOrThrow({
+      where: {
+        id_userID: {
+          id: req.params.id,
+          userID: req.user.id,
         },
       },
-    },
-  });
-
-  if (order.userID !== req.user.id) {
-    res.status(401);
-    res.json({
-      errors: [
-        {
-          code: 401,
-          message: 'Insufficient permissions',
+      include: {
+        items: {
+          include: {
+            book: true,
+          },
         },
-      ],
+      },
     });
-  } else {
-    res.status(200);
-    res.json({
-      order,
-    });
+
+    if (order.userID !== req.user.id) {
+      res.status(401);
+      res.json({
+        message: 'Insufficient permissions.',
+      });
+    } else {
+      res.status(200);
+      res.json({
+        order,
+      });
+    }
+  } catch (error) {
+    next(error);
   }
 };

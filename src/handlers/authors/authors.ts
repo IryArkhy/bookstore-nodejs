@@ -1,63 +1,77 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+
 import { prisma } from '../../db';
 import { RequestWithUser } from '../../modules/auth';
+import { CustomError } from '../../types';
+
 import { CreateAuthorReqBody } from './types';
 
-export const getAuthors = async (req: Request, res: Response) => {
-  const authors = await prisma.author.findMany();
-  res.status(200);
-  res.json({ authors });
+export const getAuthors = async (
+  _: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authors = await prisma.author.findMany({
+      orderBy: {
+        surname: 'asc',
+      },
+    });
+    res.status(200);
+    res.json({ authors });
+  } catch (error) {
+    next(new CustomError(error, 'custom', error?.code));
+  }
 };
 
 export const getAuthorByID = async (
-  req: RequestWithUser<{ authorID: string }>,
+  req: Request<{ id: string }>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const { params, user } = req;
+  const { params } = req;
 
-  if (user.role !== 'ADMIN') {
-    res.status(401);
-    res.json({
-      errors: [
-        {
-          code: 401,
-          message: 'Insufficient permissions',
-        },
-      ],
+  try {
+    const author = await prisma.author.findFirstOrThrow({
+      where: {
+        id: params.id,
+      },
+      include: {
+        books: true,
+      },
     });
+
+    res.status(200);
+    res.json({ author });
+  } catch (error) {
+    next(new CustomError(error, 'custom', 404));
   }
-
-  const author = await prisma.author.findUnique({
-    where: {
-      id: params.authorID,
-    },
-    include: {
-      books: true,
-    },
-  });
-
-  if (!author) {
-    res.status(404);
-    res.json({ message: 'Author is not found' });
-  }
-
-  res.status(200);
-  res.json({ author });
 };
 
 export const createAuthor = async (
-  req: Request<any, any, CreateAuthorReqBody>,
+  req: RequestWithUser<any, any, CreateAuthorReqBody>,
   res: Response,
+  next: NextFunction,
 ) => {
-  const { body } = req;
+  try {
+    const { body, user } = req;
 
-  const author = await prisma.author.create({
-    data: {
-      name: body.name,
-      surname: body.surname,
-    },
-  });
+    if (user.role !== 'ADMIN') {
+      res.status(401).json({
+        message: 'Insufficient permissions',
+      });
+    }
 
-  res.status(201);
-  res.json({ author });
+    const author = await prisma.author.create({
+      data: {
+        name: body.name,
+        surname: body.surname,
+      },
+    });
+
+    res.status(201);
+    res.json({ author });
+  } catch (error) {
+    next(next);
+  }
 };

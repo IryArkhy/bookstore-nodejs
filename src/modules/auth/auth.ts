@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as bcrypt from 'bcrypt';
 
 import type { ROLES as PrismaRole } from '.prisma/client';
+
 import env from '../../env';
 import { prisma } from '../../db';
 
@@ -20,8 +21,6 @@ export type RequestWithUser<
 > = Request<P, ResBody, ReqBody, ReqQuery, Locals> & {
   user: JWTUserInfo;
 };
-
-// TODO: implement rate limiting (it's added before the api on the network layer (proxy, api gateway))
 
 export const createJWT = ({ id, role }: JWTUserInfo): string => {
   const token = jwt.sign({ id, role }, env.auth.jwtSecret);

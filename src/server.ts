@@ -7,14 +7,19 @@ import router from './router';
 import { protectMiddleware } from './modules/auth';
 import * as users from './handlers/users';
 import { userValidators } from './handlers/users';
-import { handleInputErrors } from './modules/middleware';
+import {
+  catchError,
+  errorLogger,
+  handleInputErrors,
+  invalidPathHandler,
+} from './modules/middleware';
 
 const app = express();
 
 // middleware
 app.use(cors());
-app.use(morgan(env.config.morganMode));
-app.use(express.json()); // this allows a client to send us json; without it you'd have to convert the bits yourself
+app.use(morgan(env.config.morganMode ?? 'dev'));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (_, res) => {
@@ -30,5 +35,9 @@ app.post(
   users.createNewUser,
 );
 app.post('/signin', userValidators.signIn, handleInputErrors, users.signIn);
+
+app.use(invalidPathHandler);
+app.use(errorLogger);
+app.use(catchError);
 
 export default app;

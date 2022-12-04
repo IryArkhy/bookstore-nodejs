@@ -15,12 +15,15 @@ export const createOrder = [
       const validKeys = Object.keys(item).every(key =>
         orderItemKeys.includes(key),
       );
+
       const orderItem = item as {
         bookID: unknown;
         amount: unknown;
         authorID: unknown;
       };
-      const validAmount = typeof orderItem.amount === 'number';
+
+      const validAmount =
+        typeof orderItem.amount === 'number' && orderItem.amount > 0;
       const validBookID = typeof orderItem.bookID === 'string';
       const validAuthorID = typeof orderItem.authorID === 'string';
 
