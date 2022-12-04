@@ -52,7 +52,6 @@ export const protectMiddleware = async (
   }
 
   try {
-    console.log({ config });
     const user = jwt.verify(token, config.secrets.jwt) as JWTUserInfo;
 
     const userExists = await prisma.user.findFirst({
