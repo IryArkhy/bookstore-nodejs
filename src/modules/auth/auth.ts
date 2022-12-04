@@ -1,14 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import * as bcrypt from 'bcrypt';
-import * as dotenv from 'dotenv';
 
 import type { ROLES as PrismaRole } from '.prisma/client';
 
 import config from '../../config';
 import { prisma } from '../../db';
-
-dotenv.config();
 
 type JWTUserInfo = {
   role: PrismaRole;
@@ -55,6 +52,7 @@ export const protectMiddleware = async (
   }
 
   try {
+    console.log({ config });
     const user = jwt.verify(token, config.secrets.jwt) as JWTUserInfo;
 
     const userExists = await prisma.user.findFirst({
