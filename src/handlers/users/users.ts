@@ -2,7 +2,12 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../../db';
-import { comparePasswords, createJWT, hashPassword } from '../../modules/auth';
+import {
+  comparePasswords,
+  createJWT,
+  hashPassword,
+  RequestWithUser,
+} from '../../modules/auth';
 import { CustomError, PrismaClientErrorCodes } from '../../types';
 
 import { CreateUserRequestBody, SignInRequestBody } from './types';
@@ -76,6 +81,47 @@ export const signIn = async (
 
     res.status(200).json({
       token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsers = async (
+  req: RequestWithUser<any, any, any, { offset?: string; limit?: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { query } = req;
+    const { offset = 0, limit = 20 } = query;
+
+    const users = await prisma.user.findMany({
+      skip: +offset,
+      take: +limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        name: true,
+        surname: true,
+        createdAt: true,
+      },
+    });
+
+    const count = await prisma.user.count();
+
+    res.status(200);
+    const newOffset = +offset + +limit;
+
+    res.json({
+      users,
+      count: count,
+      limit,
+      offset: newOffset === count ? null : newOffset,
     });
   } catch (error) {
     next(error);

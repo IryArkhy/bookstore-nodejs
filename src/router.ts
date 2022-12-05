@@ -11,8 +11,15 @@ import { booksHandlers, booksValidators } from './handlers/books';
 import { orderHandlers, ordersValidators } from './handlers/orders';
 import { authorHandlers, authorsValidators } from './handlers/authors';
 import { genresHandlers, genresValidators } from './handlers/genres';
+import { userHandlers } from './handlers/users';
 
 const router = Router();
+
+/**
+ * Users
+ */
+
+router.get('/user', checkUserRole, userHandlers.getUsers);
 
 /**
  * Books

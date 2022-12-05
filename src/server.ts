@@ -5,8 +5,7 @@ import cors from 'cors';
 import config from './config';
 import router from './router';
 import { protectMiddleware } from './modules/auth';
-import * as users from './handlers/users';
-import { userValidators } from './handlers/users';
+import { userHandlers, userValidators } from './handlers/users';
 import {
   catchError,
   errorLogger,
@@ -31,9 +30,14 @@ app.post(
   '/user',
   userValidators.createUser,
   handleInputErrors,
-  users.createNewUser,
+  userHandlers.createNewUser,
 );
-app.post('/signin', userValidators.signIn, handleInputErrors, users.signIn);
+app.post(
+  '/signin',
+  userValidators.signIn,
+  handleInputErrors,
+  userHandlers.signIn,
+);
 
 app.use(invalidPathHandler);
 app.use(errorLogger);
