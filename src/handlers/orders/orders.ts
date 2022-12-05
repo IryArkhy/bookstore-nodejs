@@ -1,6 +1,6 @@
 import { Book } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
-import { NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../../db';
 import { RequestWithUser } from '../../modules/auth';
@@ -62,9 +62,10 @@ export const createOrder = async (
 };
 
 export const updateOrder = async (
-  req: RequestWithUser<
+  req: Request<
     {
       id: string;
+      userID: string;
     },
     any,
     UpdateOrderStatusReqBody
@@ -72,14 +73,14 @@ export const updateOrder = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { user, body, params } = req;
+  const { body, params } = req;
 
   try {
     const order = await prisma.order.update({
       where: {
         id_userID: {
           id: params.id,
-          userID: user.id,
+          userID: params.userID,
         },
       },
       data: {

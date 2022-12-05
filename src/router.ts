@@ -59,7 +59,7 @@ router.post(
   orderHandlers.createOrder,
 );
 router.put(
-  '/order/:id',
+  '/order/:id/:userID',
   ordersValidators.updateOrder,
   handleInputErrors,
   checkUserRole,

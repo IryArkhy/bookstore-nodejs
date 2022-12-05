@@ -33,12 +33,12 @@ export const createGenres = async (
   try {
     const { body } = req;
 
-    const genres = await prisma.genre.createMany({
-      data: body.genres.map(g => ({ name: g })),
+    await prisma.genre.createMany({
+      data: body.genres.map(g => ({ name: g.toLowerCase() })),
     });
 
     res.status(201);
-    res.json({ genres });
+    res.json({ genres: body.genres.map(g => ({ name: g.toLowerCase() })) });
   } catch (error) {
     let err: CustomError | Error = error as Error;
     let errorMessage: string = error.message;
